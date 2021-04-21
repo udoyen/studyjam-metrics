@@ -3,6 +3,8 @@ from google.cloud import monitoring_v3
 import requests
 import time
 
+# Google Cloud Monitoring: https://cloud.google.com/monitoring/docs/reference/libraries#command-line
+
 app = Flask(__name__)
 
 # Use this to get the instance metadata
