@@ -1,0 +1,2 @@
+# Install monitoring metrics agent on vm instance
+gcloud beta compute ssh metric-test-instance --project=steam-kingdom-311415 --zone=us-central1-a --command="curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh && sudo bash add-monitoring-agent-repo.sh && sudo apt-get update && sudo apt-get install stackdriver-agent && sudo service stackdriver-agent start"
