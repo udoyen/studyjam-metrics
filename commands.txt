@@ -16,4 +16,4 @@ roles/secretmanager.secretAccessor
 
 ```
 
-
+logName:("projects/steam-kingdom-311415/logs/compute.googleapis.com%2Fvpc_flows") AND resource.labels.subnetwork_id:(8603958913247682994)

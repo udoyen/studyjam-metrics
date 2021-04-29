@@ -1,4 +1,4 @@
-### Study Jame Project
+### Study Jam Project
 
 ### Note:
 
