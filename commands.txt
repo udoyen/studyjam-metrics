@@ -1,2 +1,19 @@
 # Install monitoring metrics agent on vm instance
 gcloud beta compute ssh metric-test-instance --project=steam-kingdom-311415 --zone=us-central1-a --command="curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh && sudo bash add-monitoring-agent-repo.sh && sudo apt-get update && sudo apt-get install stackdriver-agent && sudo service stackdriver-agent start"
+
+# Get the associated roles to the service account
+
+gcloud projects get-iam-policy steam-kingdom-311415 --flatten="bindings[].members" --format='table(bindings.role)' --filter="bindings.members:custom-metrics-sa@steam-kingdom-311415.iam.gserviceaccount.com"
+
+## Result
+
+```
+
+ROLE
+roles/editor
+roles/monitoring.metricWriter
+roles/secretmanager.secretAccessor
+
+```
+
+

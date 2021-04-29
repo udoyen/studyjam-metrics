@@ -2,6 +2,10 @@ from flask import Flask
 from google.cloud import monitoring_v3
 from google.cloud import secretmanager
 import requests
+import uuid
+from threading import Thread
+# from task import threaded_task
+
 
 import time
 
@@ -11,6 +15,8 @@ app = Flask(__name__)
 
 # Create a global HTTP session (which provides connection pooling)
 session = requests.Session()
+gce_id = "5433177338217484030"
+gce_zone = "us-central1-a"
 
 def gcp_api_call(request):
     """
@@ -43,16 +49,17 @@ def gcp_api_call(request):
         #     gce_zone = s.get(metadata_server + 'zone', headers = metadata_flavor).text
             # gce_project_id = request.get(metadata_server_for_project + 'project-id', headers = metadata_flavor).text
 
-
+        #INFO: Create the metric client
         metricClient = monitoring_v3.MetricServiceClient()
         project = 'steam-kingdom-311415'  # TODO: Update to your project ID.
         project_name = f"projects/{project}"
 
+        #INFO: Setup the time series
         series = monitoring_v3.TimeSeries()
         series.metric.type = "custom.googleapis.com/studyjam_metric"
         series.resource.type = "gce_instance"
-        series.resource.labels["instance_id"] = "5433177338217484030"
-        series.resource.labels["zone"] = "us-central1-a"
+        series.resource.labels["instance_id"] = gce_id
+        series.resource.labels["zone"] = gce_zone
 
         now = time.time()
         seconds = int(now)
@@ -60,10 +67,14 @@ def gcp_api_call(request):
         interval = monitoring_v3.TimeInterval(
             {"end_time": {"seconds": seconds, "nanos": nanos}}
         )
+
+        #INFO: Create the data point
         point = monitoring_v3.Point({"interval": interval, "value": {"double_value": 3.14}})
         series.points = [point]
+
+        #INFO: Write 
         metricClient.create_time_series(request={"name": project_name, "time_series": [series]})
-        
+
         print("Successfully wrote time series.")
 
         return 'Success!'
@@ -91,10 +102,24 @@ def get_secret(project_id, secret_id="metric-secret", version_id="latest"):
     
 @app.route("/")
 def hello():
-    gcp_api_call(session)
     # get_secret('steam-kingdom-311415')
+    # write_to_monitoring()
+    monitor = TestThreading()
     return "Hello World from Flask"
 
+class TestThreading(object):
+    """
+    
+    """
+    def __init__(self, interval=5):
+        self.interval = interval
+        thread = Thread(target=self.write_to_monitoring, args=())
+        thread.daemon = True
+        thread.start()
+    def write_to_monitoring(self):
+        for i in range(50):
+            time.sleep(5)
+            gcp_api_call(session)
 
 
 if __name__ == "__main__":
