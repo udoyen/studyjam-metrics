@@ -27,3 +27,11 @@ Monitoring API
 ### Beginner Guide
 
 Link: https://medium.com/google-cloud/stackdriver-custom-metrics-in-python-30fafb585a1d
+
+
+### Run project
+
+1. Create a virtualenv
+2. Install dependencies from requirements.txt file
+3. Activate the environment
+4. If using ```pyenv``` run ```pipenv install``` from the app folder
