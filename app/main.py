@@ -115,6 +115,19 @@ def hello():
     monitor = TestThreading()
     return "Hello World from Flask"
 
+
+@app.route("/studyjam")
+def welcome():
+    """Flask welcome function
+
+    Returns:
+        String: Returns a simple string
+    """
+    # get_secret('steam-kingdom-311415')
+    # write_to_monitoring()
+    monitor = TestThreading()
+    return "Welcome to Studyjam Flask"
+
 class TestThreading(object):
     """Class used to run the monitoring writes 
     in the background
