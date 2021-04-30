@@ -4,9 +4,6 @@ from google.cloud import secretmanager
 import requests
 import uuid
 from threading import Thread
-# from task import threaded_task
-
-
 import time
 
 # Google Cloud Monitoring: https://cloud.google.com/monitoring/docs/reference/libraries#command-line
@@ -18,12 +15,13 @@ session = requests.Session()
 gce_id = "5433177338217484030"
 gce_zone = "us-central1-a"
 
-def gcp_api_call(request):
+def gcp_api_call(request, count=0):
     """
     HTTP Cloud Function that uses a connection pool to make HTTP requests.
     Args:
         request (flask.Request): The request object.
         <http://flask.pocoo.org/docs/1.0/api/#flask.Request>
+        count: The count metric
     Returns:
         The response text, or any set of values that can be turned into a
         Response object using `make_response`
@@ -69,7 +67,8 @@ def gcp_api_call(request):
         )
 
         #INFO: Create the data point
-        point = monitoring_v3.Point({"interval": interval, "value": {"double_value": 3.14}})
+        point = monitoring_v3.Point({"interval": interval, "value": {"double_value": count}})
+        print(f"Count: {count}")
         series.points = [point]
 
         #INFO: Write 
@@ -102,14 +101,22 @@ def get_secret(project_id, secret_id="metric-secret", version_id="latest"):
     
 @app.route("/")
 def hello():
+    """Flask hello function
+
+    Returns:
+        String: Returns a simple string
+    """
     # get_secret('steam-kingdom-311415')
     # write_to_monitoring()
     monitor = TestThreading()
     return "Hello World from Flask"
 
 class TestThreading(object):
-    """
-    
+    """Class used to run the monitoring writes 
+    in the background
+
+    Args:
+        object (class): [description]
     """
     def __init__(self, interval=5):
         self.interval = interval
@@ -117,9 +124,11 @@ class TestThreading(object):
         thread.daemon = True
         thread.start()
     def write_to_monitoring(self):
+        count = 1
         for i in range(50):
             time.sleep(5)
-            gcp_api_call(session)
+            gcp_api_call(session, count=count)
+            count += 1
 
 
 if __name__ == "__main__":

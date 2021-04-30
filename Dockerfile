@@ -10,3 +10,5 @@ RUN apk update && apk add --no-cache \
 RUN pip install -r requirements.txt
 
 EXPOSE 80
+
+CMD ["python","-u","main.py"]

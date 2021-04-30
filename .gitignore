@@ -4,3 +4,4 @@ app/.venv
 app/venv
 __pycache__
 app/__pycache__
+local.*

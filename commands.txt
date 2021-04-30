@@ -17,3 +17,7 @@ roles/secretmanager.secretAccessor
 ```
 
 logName:("projects/steam-kingdom-311415/logs/compute.googleapis.com%2Fvpc_flows") AND resource.labels.subnetwork_id:(8603958913247682994)
+
+docker run --name studyjamflaskapp -d -e GOOGLE_APPLICATION_CREDENTIALS=/home/george/Documents/study-jam-docs/cohort-team2/steam-kingdom-311415-d40b597ea6e4.json -v /home/george/Documents/study-jam-docs/cohort-team2/steam-kingdom-311415-d40b597ea6e4.json:/tmp/keys/steam-kingdom-311415-d40b597ea6e4.json:ro -p 80:80 gcr.io/steam-kingdom-311415/studyjamimage:v1
+
+docker run --name studyjamflaskapp-withcert -d --network host -e GOOGLE_APPLICATION_CREDENTIALS=/tmp/keys/steam-kingdom-311415-d40b597ea6e4.json -v /home/george/Documents/study-jam-docs/cohort-team2/steam-kingdom-311415-d40b597ea6e4.json:/tmp/keys/steam-kingdom-311415-d40b597ea6e4.json:ro -v /home/george/Documents/study-jam-docs/cohort-team2/round8/app/local.crt:/tmp/keys/local.crt:ro -v /home/george/Documents/study-jam-docs/cohort-team2/round8/app/local.key:/tmp/keys/local.key:ro gcr.io/steam-kingdom-311415/studyjamimage:v1
