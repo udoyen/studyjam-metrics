@@ -3,8 +3,12 @@ from google.cloud import monitoring_v3
 from google.cloud import secretmanager
 import requests
 import uuid
+import ssl
 from threading import Thread
 import time
+
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER) 
+context.load_cert_chain('local.crt', 'local.key')
 
 # Google Cloud Monitoring: https://cloud.google.com/monitoring/docs/reference/libraries#command-line
 
@@ -133,4 +137,4 @@ class TestThreading(object):
 
 if __name__ == "__main__":
     # Only for debugging while developing
-    app.run(host='0.0.0.0', debug=True, port=8080)
+    app.run(host='0.0.0.0', debug=True, port=8080, ssl_context=context)
