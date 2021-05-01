@@ -1,10 +1,12 @@
+import requests
+import uuid
+import ssl
+import time
 from flask import Flask
 from google.cloud import monitoring_v3
 from google.cloud import secretmanager
-import requests
-import uuid
+from google.cloud import storage
 from threading import Thread
-import time
 
 # Google Cloud Monitoring: https://cloud.google.com/monitoring/docs/reference/libraries#command-line
 
@@ -12,8 +14,6 @@ app = Flask(__name__)
 
 # Create a global HTTP session (which provides connection pooling)
 session = requests.Session()
-gce_id = "5433177338217484030"
-gce_zone = "us-central1-a"
 
 def gcp_api_call(request, count=0):
     """
@@ -38,18 +38,21 @@ def gcp_api_call(request, count=0):
         # metadata_server = "http://metadata/computeMetadata/v1/instance/"
         metadata_server = "http://metadata.google.internal/computeMetadata/v1/instance/"
 
-        # metadata_server_for_project = "http://metadata.google.internal/computeMetadata/v1/project/
+        metadata_server_for_project = "http://metadata.google.internal/computeMetadata/v1/project/"
 
         metadata_flavor = {'Metadata-Flavor' : 'Google'}
-        # with request as s:
-        #     gce_id = s.get(metadata_server + 'id', headers = metadata_flavor).text
-        #     gce_name = s.get(metadata_server + 'hostname', headers = metadata_flavor).text
-        #     gce_zone = s.get(metadata_server + 'zone', headers = metadata_flavor).text
-            # gce_project_id = request.get(metadata_server_for_project + 'project-id', headers = metadata_flavor).text
+        with request as s:
+            gce_id = s.get(metadata_server + 'id', headers = metadata_flavor).text
+            gce_name = s.get(metadata_server + 'hostname', headers = metadata_flavor).text
+            gce_zone = s.get(metadata_server + 'zone', headers = metadata_flavor).text
+            gce_project_id = request.get(metadata_server_for_project + 'project-id', headers = metadata_flavor).text
+
+        # INFO: This returns the zone of the instance
+        zone = gce_zone[gce_zone.index('z')::][gce_zone[gce_zone.index('z')::].index('/') + 1::]
 
         #INFO: Create the metric client
         metricClient = monitoring_v3.MetricServiceClient()
-        project = 'steam-kingdom-311415'  # TODO: Update to your project ID.
+        project = gce_project_id  # TODO: Update to your project ID.
         project_name = f"projects/{project}"
 
         #INFO: Setup the time series
@@ -57,7 +60,7 @@ def gcp_api_call(request, count=0):
         series.metric.type = "custom.googleapis.com/studyjam_metric"
         series.resource.type = "gce_instance"
         series.resource.labels["instance_id"] = gce_id
-        series.resource.labels["zone"] = gce_zone
+        series.resource.labels["zone"] = zone
 
         now = time.time()
         seconds = int(now)
@@ -72,7 +75,7 @@ def gcp_api_call(request, count=0):
         series.points = [point]
 
         #INFO: Write 
-        metricClient.create_time_series(request={"name": project_name, "time_series": [series]})
+        metricClient.create_time_series(request={"name": gce_project_id, "time_series": [series]})
 
         print("Successfully wrote time series.")
 
@@ -87,7 +90,7 @@ secret_id = 'metric-secret'
 secretClient = secretmanager.SecretManagerServiceClient()
 version_id = 1
 
-def get_secret(project_id, secret_id="metric-secret", version_id="latest"):
+def get_secret(project_id, secret_id, version_id="latest"):
     # projects/153702000616/secrets/metric-secret/versions/1
     # Build the resource name of the secret version.
     name = f"projects/steam-kingdom-311415/secrets/{secret_id}/versions/{version_id}"
@@ -97,6 +100,36 @@ def get_secret(project_id, secret_id="metric-secret", version_id="latest"):
     print("Plaintext: {}".format(secret))
 
 # get_secret(project_id="steam-kingdom-311415", secret_id=secret_id, version_id=1)
+
+def download_blob(bucket_name, source_blob_name, destination_file_name):
+    """Downloads a blob from the bucket."""
+    # bucket_name = "your-bucket-name"
+    # source_blob_name = "storage-object-name"
+    # destination_file_name = "local/path/to/file"
+
+    try:
+        storage_client = storage.Client()
+
+        bucket = storage_client.bucket(bucket_name)
+
+        # Construct a client side representation of a blob.
+        # Note `Bucket.blob` differs from `Bucket.get_blob` as it doesn't retrieve
+        # any content from Google Cloud Storage. As we don't need additional data,
+        # using `Bucket.blob` is preferred here.
+        blob = bucket.blob(source_blob_name)
+        blob.download_to_filename(destination_file_name)
+
+        print(
+            "Blob {} downloaded to {}.".format(
+                source_blob_name, destination_file_name
+            )
+        )
+    except Exception as e:
+        print(f"Error: {e}")
+
+# INFO: Retrieve the crt files from cloud storage
+download_blob('study-jam-keys', 'keys/local.crt', './local2.crt')
+download_blob('study-jam-keys', 'keys/local.key', './local2.key')
 
     
 @app.route("/")
@@ -110,6 +143,19 @@ def hello():
     # write_to_monitoring()
     monitor = TestThreading()
     return "Hello World from Flask"
+
+
+@app.route("/studyjam")
+def welcome():
+    """Flask welcome function
+
+    Returns:
+        String: Returns a simple string
+    """
+    # get_secret('steam-kingdom-311415')
+    # write_to_monitoring()
+    # monitor = TestThreading()
+    return "Welcome to Studyjam Flask"
 
 class TestThreading(object):
     """Class used to run the monitoring writes 
@@ -132,5 +178,7 @@ class TestThreading(object):
 
 
 if __name__ == "__main__":
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain('./local2.crt', './local2.key')
     # Only for debugging while developing
-    app.run(host='0.0.0.0', debug=True, port=8080)
+    app.run(host='0.0.0.0', debug=True, port=8080, ssl_context=context)
