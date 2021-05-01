@@ -5,7 +5,10 @@ COPY ./app/ /app/
 
 # RUN apk add --update alpine-sdk
 RUN apk update && apk add --no-cache \ 
-    autoconf build-base binutils cmake curl file gcc g++ git libgcc libtool linux-headers make musl-dev ninja tar unzip wget
+    autoconf build-base binutils cmake curl \
+    musl-dev python3-dev libffi-dev openssl-dev \
+    cargo file gcc g++ git libgcc libtool linux-headers \
+    libxslt-dev make musl-dev ninja tar unzip wget
     
 RUN pip install -r requirements.txt
 
