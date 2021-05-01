@@ -4,8 +4,7 @@
 
 Steps to run on your vm instances:
 
-1. Add your project id, and zone information
-2. Create a service and grant it access to Metric writing for the VM instance
+1. Create a service and grant it access to Metric writing for the VM instance
 
 
 Steps to create a custom metrics
