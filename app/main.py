@@ -75,7 +75,7 @@ def gcp_api_call(request, count=0):
         series.points = [point]
 
         #INFO: Write 
-        metricClient.create_time_series(request={"name": gce_project_id, "time_series": [series]})
+        metricClient.create_time_series(request={"name": f"projects/{gce_project_id}/gce_instance/{gce_id}", "time_series": [series]})
 
         print("Successfully wrote time series.")
 
